@@ -5,6 +5,7 @@ import { Calculator } from './components/Calculator';
 import { DetailedSpecs } from './components/DetailedSpecs';
 import { FoldingStandSection } from './components/FoldingStandSection';
 import { SmartHubSection } from './components/SmartHubSection';
+import { SystemAssembly } from './components/SystemAssembly';
 import { ChartSection } from './components/ChartSection';
 import { ContactSection } from './components/ContactSection';
 import { SystemTopology } from './components/SystemTopology';
@@ -332,6 +333,7 @@ function App() {
       <section className="bg-black">
         <FoldingStandSection />
         <SmartHubSection />
+        <SystemAssembly />
       </section>
 
       {/* Case Study Section (Visual Redesign) */}
