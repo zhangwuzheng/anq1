@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Navbar } from './components/Navbar';
 import { Button } from './components/Button';
 import { Calculator } from './components/Calculator';
 import { DetailedSpecs } from './components/DetailedSpecs';
 import { FoldingStandSection } from './components/FoldingStandSection';
 import { SmartHubSection } from './components/SmartHubSection';
-import { SystemAssembly } from './components/SystemAssembly';
+// Remove direct import to save initial bundle size
+// import { SystemAssembly } from './components/SystemAssembly';
 import { ChartSection } from './components/ChartSection';
 import { ContactSection } from './components/ContactSection';
 import { SystemTopology } from './components/SystemTopology';
@@ -13,8 +14,11 @@ import { AppDownload } from './components/AppDownload';
 import { ApplicationScenarios } from './components/ApplicationScenarios';
 import { PartnerMarquee } from './components/PartnerMarquee';
 import { PRODUCTS, HERO_IMAGE } from './constants';
-import { ArrowRight, Home, Factory, Backpack, ChevronRight, Star, Timer, Box, Layers, MapPin, Mountain, Thermometer, Sun, Wind, CheckCircle, TrendingUp, DollarSign } from 'lucide-react';
+import { ArrowRight, Home, Factory, Backpack, ChevronRight, Star, Timer, Box, Layers, MapPin, Mountain, Thermometer, Sun, Wind, CheckCircle, TrendingUp, DollarSign, Loader2 } from 'lucide-react';
 import { Product } from './types';
+
+// Lazy load the heavy 3D component
+const SystemAssembly = lazy(() => import('./components/SystemAssembly').then(module => ({ default: module.SystemAssembly })));
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -333,7 +337,15 @@ function App() {
       <section className="bg-black">
         <FoldingStandSection />
         <SmartHubSection />
-        <SystemAssembly />
+        {/* Suspense wrapper for lazy loading 3D component */}
+        <Suspense fallback={
+            <div className="w-full h-[600px] flex flex-col items-center justify-center bg-surface-900 border-t border-white/5">
+                <Loader2 className="w-10 h-10 text-lumina-500 animate-spin mb-4" />
+                <p className="text-gray-400">正在加载 3D 演示引擎...</p>
+            </div>
+        }>
+            <SystemAssembly />
+        </Suspense>
       </section>
 
       {/* Case Study Section (Visual Redesign) */}

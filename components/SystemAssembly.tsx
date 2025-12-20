@@ -7,39 +7,12 @@ import {
   ContactShadows, 
   RoundedBox, 
   Text,
-  Float,
-  useTexture
 } from '@react-three/drei';
 import * as THREE from 'three';
 import { Button } from './Button';
-import { CheckCircle2, RotateCw, Box as BoxIcon, Zap, Lightbulb } from 'lucide-react';
+import { CheckCircle2, RotateCw, Box as BoxIcon, MonitorSmartphone } from 'lucide-react';
 
-// Fix for IntrinsicElements in TypeScript for React Three Fiber
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      meshPhysicalMaterial: any;
-      meshStandardMaterial: any;
-      meshBasicMaterial: any;
-      planeGeometry: any;
-      boxGeometry: any;
-      cylinderGeometry: any;
-      sphereGeometry: any;
-      tubeGeometry: any;
-      torusGeometry: any;
-      ringGeometry: any;
-      ambientLight: any;
-      directionalLight: any;
-      spotLight: any;
-      pointLight: any;
-      gridHelper: any;
-      primitive: any;
-    }
-  }
-}
-
+// Augmented definition for React Three Fiber elements
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
@@ -51,10 +24,39 @@ declare module 'react' {
       planeGeometry: any;
       boxGeometry: any;
       cylinderGeometry: any;
+      coneGeometry: any; 
       sphereGeometry: any;
       tubeGeometry: any;
       torusGeometry: any;
       ringGeometry: any;
+      circleGeometry: any;
+      ambientLight: any;
+      directionalLight: any;
+      spotLight: any;
+      pointLight: any;
+      gridHelper: any;
+      primitive: any;
+    }
+  }
+}
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      group: any;
+      mesh: any;
+      meshPhysicalMaterial: any;
+      meshStandardMaterial: any;
+      meshBasicMaterial: any;
+      planeGeometry: any;
+      boxGeometry: any;
+      cylinderGeometry: any;
+      coneGeometry: any; 
+      sphereGeometry: any;
+      tubeGeometry: any;
+      torusGeometry: any;
+      ringGeometry: any;
+      circleGeometry: any;
       ambientLight: any;
       directionalLight: any;
       spotLight: any;
@@ -85,75 +87,62 @@ const CONFIGS: Record<ConfigType, SystemConfig> = {
 
 // --- Materials ---
 const glassMaterial = new THREE.MeshPhysicalMaterial({
-  color: new THREE.Color('#1e3a8a'), // Brighter blue
+  color: new THREE.Color('#0a1a3a'), 
   metalness: 0.9,
   roughness: 0.1,
   clearcoat: 1.0,
   clearcoatRoughness: 0.05,
-  transparent: false,
 });
 
 const frameMaterial = new THREE.MeshStandardMaterial({
-  color: '#333',
-  roughness: 0.5,
-  metalness: 0.6
+  color: '#1a1a1a',
+  roughness: 0.6,
+  metalness: 0.5
 });
 
 const cellGridMaterial = new THREE.MeshBasicMaterial({
   color: '#ffffff',
   wireframe: true,
   transparent: true,
-  opacity: 0.1
+  opacity: 0.05
 });
 
 // --- Components ---
 
-// 1. Solar Panel Unit
-// Dimensions: Roughly 1m x 1.8m
-const SolarPanel = ({ idx, groupIndex, isAssembled, delayOffset = 0 }: any) => {
+// 1. Solar Panel Unit (Tight spacing - No Gaps)
+const SolarPanel = ({ idx, show, unfolded }: any) => {
   const meshRef = useRef<THREE.Group>(null);
   
-  // 2x2 Layout Logic within a group
-  // idx 0: Top-Left, 1: Top-Right, 2: Bottom-Left, 3: Bottom-Right
-  const row = Math.floor(idx / 2);
-  const col = idx % 2;
+  // 2x2 Layout: Zero gap
+  const row = Math.floor(idx / 2); // 0 or 1
+  const col = idx % 2; // 0 or 1
   
-  // Spacing
-  const gap = 0.05;
   const width = 1.05;
   const height = 1.85;
   
-  // Target Assembled Position (Local to Group)
-  // Centered 2x2 grid
-  const tX = (col - 0.5) * (width + gap); 
-  // In 3D, "Up" on the panel plane corresponds to Z in world space if flat, 
-  // but we tilt the whole group usually. Let's arrange them on X/Y plane first then rotate group.
-  const tY = -(row - 0.5) * (height + gap); 
-  const tZ = 0;
-
-  // Packed Position (Stacked in a box)
-  // All centered, stacked vertically by thickness
-  const pX = 0;
-  const pY = 0;
-  const pZ = idx * 0.1; // Stack thickness
+  // Center the 2x2 group
+  const totalW = (width * 2);
+  const totalH = (height * 2);
+  
+  const tX = (col * width) - (totalW / 2) + (width / 2);
+  const tY = -((row * height) - (totalH / 2) + (height / 2)); // Relative Y in panel plane
+  
+  // Packed: Stacked
+  const pZ = idx * 0.06; // Stack thickness
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;
+    const speed = 0.8 * delta;
     
-    // Slow down the animation
-    const speed = 1.5 * delta;
+    // Scale for appear effect
+    const targetScale = show ? 1 : 0;
+    meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), speed * 2);
+
+    // Unfold animation
+    const targetX = unfolded ? tX : 0;
+    const targetY = unfolded ? tY : 0;
+    const targetZ = unfolded ? 0 : pZ;
     
-    // Delay logic based on index for sequential effect
-    // We can simulate delay by checking a global timer or just clamping animation
-    // Simple lerp with different speeds isn't enough for true sequence, 
-    // but for visual effect, we can use a conditional target based on time?
-    // Let's stick to Lerp but with 'damp' feel.
-    
-    const targetX = isAssembled ? tX : pX;
-    const targetY = isAssembled ? tY : pY;
-    const targetZ = isAssembled ? tZ : pZ;
-    
-    // Position
     meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, targetX, speed);
     meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetY, speed);
     meshRef.current.position.z = THREE.MathUtils.lerp(meshRef.current.position.z, targetZ, speed);
@@ -161,278 +150,332 @@ const SolarPanel = ({ idx, groupIndex, isAssembled, delayOffset = 0 }: any) => {
 
   return (
     <group ref={meshRef}>
-      <RoundedBox args={[width, height, 0.04]} radius={0.01} material={frameMaterial}>
-        {/* Cell Face */}
+      <RoundedBox args={[width, height, 0.04]} radius={0.005} material={frameMaterial}>
         <mesh position={[0, 0, 0.021]} material={glassMaterial}>
-           <planeGeometry args={[width - 0.05, height - 0.05]} />
+           <planeGeometry args={[width - 0.01, height - 0.01]} />
         </mesh>
-        {/* Grid Lines */}
         <mesh position={[0, 0, 0.022]} material={cellGridMaterial}>
-           <planeGeometry args={[width - 0.05, height - 0.05, 6, 10]} />
+           <planeGeometry args={[width - 0.01, height - 0.01, 6, 10]} />
         </mesh>
       </RoundedBox>
     </group>
   );
 }
 
-// 2. Solar Group (2x2 Grid)
-const SolarGroup = ({ index, isAssembled }: { index: number, isAssembled: boolean }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const standRef = useRef<THREE.Group>(null);
-  
-  useFrame((_, delta) => {
-    if (!groupRef.current || !standRef.current) return;
-    const speed = 1.2 * delta;
-
-    // --- Group Transform ---
-    // Assembled: Spread out along X axis (side by side groups)
-    // Packed: Floating above the ground, maybe center stage
-    const groupSpacing = 3.5;
-    const assembledX = (index * groupSpacing) - groupSpacing/2; // Rough centering
-    
-    // Packed: All groups start at center (0,0,0) or slightly offset
-    const packedX = 0;
-    const packedY = 1 + (index * 0.5); // Stack groups
-    const packedZ = 0;
-
-    const assembledY = 0.8; // Height of bottom edge from ground
-    const assembledZ = -2;
-
-    const tX = isAssembled ? assembledX : packedX;
-    const tY = isAssembled ? assembledY : packedY;
-    const tZ = isAssembled ? assembledZ : packedZ;
-
-    // Move Group
-    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, tX, speed);
-    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, tY, speed);
-    groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, tZ, speed);
-
-    // Rotate Group (Tilt for Sun)
-    // Packed: Flat (RotX = -PI/2 to lay flat stack? Or 0 if vertical?)
-    // Let's say Packed = Flat horizontal (RotX = -PI/2)
-    // Assembled = Tilted 30 deg (RotX = -PI/6)
-    const assembledRotX = -Math.PI / 6;
-    const packedRotX = -Math.PI / 2; // Flat like a table
-    
-    const tRotX = isAssembled ? assembledRotX : packedRotX;
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, tRotX, speed);
-    
-    // Stand Animation
-    // Only visible when assembled
-    const standScale = isAssembled ? 1 : 0;
-    standRef.current.scale.setScalar(THREE.MathUtils.lerp(standRef.current.scale.x, standScale, speed));
-  });
-
-  return (
-    <group>
-        <group ref={groupRef}>
-          {/* 4 Panels in 2x2 configuration */}
-          {[0, 1, 2, 3].map(i => (
-            <SolarPanel key={i} idx={i} groupIndex={index} isAssembled={isAssembled} />
-          ))}
-          
-          {/* The Support Structure (Attached to group) */}
-          <group ref={standRef} position={[0, 0, -0.5]} rotation={[Math.PI/2, 0, 0]}>
-             {/* Main Pole */}
-             <mesh position={[0, -1, 0]}>
-                <cylinderGeometry args={[0.05, 0.05, 2.5]} />
-                <meshStandardMaterial color="#666" />
-             </mesh>
-             {/* Cross Bars */}
-             <mesh position={[0, 0.2, 0]} rotation={[0, 0, Math.PI/2]}>
-                 <cylinderGeometry args={[0.03, 0.03, 2.2]} />
-                 <meshStandardMaterial color="#666" />
-             </mesh>
-          </group>
-        </group>
-    </group>
-  );
-};
-
-// 3. Street Lamp (Load)
-const StreetLamp = ({ isAssembled }: { isAssembled: boolean }) => {
-    const lightRef = useRef<THREE.PointLight>(null);
-    const bulbRef = useRef<THREE.Mesh>(null);
-
-    useFrame((state) => {
-        if (!lightRef.current || !bulbRef.current) return;
-        // Flicker effect or smooth turn on
-        const targetIntensity = isAssembled ? 5 : 0;
-        // Add slight random flicker if on
-        const flicker = isAssembled ? (Math.random() * 0.5) : 0;
-        
-        lightRef.current.intensity = THREE.MathUtils.lerp(lightRef.current.intensity, targetIntensity + flicker, 0.05);
-        
-        // Bulb emission
-        const mat = bulbRef.current.material as THREE.MeshStandardMaterial;
-        mat.emissiveIntensity = THREE.MathUtils.lerp(mat.emissiveIntensity, isAssembled ? 2 : 0, 0.05);
-    });
-
+// Fixed Ground Stand (T-Shape)
+const FixedStand = () => {
     return (
-        <group position={[3.5, 0, 0]}>
-            {/* Pole */}
-            <mesh position={[0, 2, 0]}>
-                <cylinderGeometry args={[0.08, 0.12, 4]} />
-                <meshStandardMaterial color="#1a1a1a" roughness={0.8} />
+        <group position={[0, -1.2, 0]}> 
+            {/* Main Central Post */}
+            <mesh position={[0, 0.6, 0]}>
+                <cylinderGeometry args={[0.08, 0.1, 1.2]} />
+                <meshStandardMaterial color="#333" />
             </mesh>
-            {/* Arm */}
-            <mesh position={[-0.5, 3.8, 0]} rotation={[0, 0, Math.PI/4]}>
-                <cylinderGeometry args={[0.05, 0.05, 1.5]} />
-                <meshStandardMaterial color="#1a1a1a" />
-            </mesh>
-            {/* Lamp Head */}
-            <group position={[-1.1, 4.3, 0]} rotation={[0, 0, Math.PI/6]}>
-                <mesh>
-                    <cylinderGeometry args={[0.3, 0.1, 0.2]} />
-                    <meshStandardMaterial color="#111" />
-                </mesh>
-                {/* Bulb */}
-                <mesh position={[0, -0.1, 0]} ref={bulbRef}>
-                    <sphereGeometry args={[0.15, 16, 16]} />
-                    <meshStandardMaterial color="#ffebb7" emissive="#ffebb7" />
-                </mesh>
-                {/* Light Source */}
-                <pointLight ref={lightRef} distance={10} decay={2} color="#ffebb7" castShadow />
-                
-                {/* Light Cone Volumetric Fake */}
-                {isAssembled && (
-                    <mesh position={[0, -2, 0]} rotation={[0, 0, 0]}>
-                        <cylinderGeometry args={[0.2, 1.5, 4, 16, 1, true]} />
-                        <meshBasicMaterial color="#ffebb7" transparent opacity={0.1} side={THREE.DoubleSide} depthWrite={false} />
+            {/* Base Feet (Cross style) */}
+            {[0, 1, 2, 3].map(i => (
+                <group key={i} rotation={[0, (i * Math.PI) / 2, 0]}>
+                    <mesh position={[0.4, 0.1, 0]} rotation={[0, 0, 0]}>
+                        <boxGeometry args={[0.8, 0.05, 0.08]} />
+                        <meshStandardMaterial color="#222" />
                     </mesh>
-                )}
-            </group>
+                </group>
+            ))}
+            {/* Top Hinge Support (North-South Bar) */}
+            <mesh position={[0, 1.2, 0]} rotation={[Math.PI/2, 0, 0]}>
+                <cylinderGeometry args={[0.06, 0.06, 0.4]} />
+                <meshStandardMaterial color="#555" />
+            </mesh>
         </group>
     )
 }
 
-// 4. Battery & Hub Stack (Central Unit)
-const PowerStack = ({ count, isAssembled }: { count: number, isAssembled: boolean }) => {
-    const stackRef = useRef<THREE.Group>(null);
+// Telescopic Actuator (Visualizes the tilt mechanism)
+const TelescopicActuator = ({ tilt }: { tilt: number }) => {
+    const cylinderRef = useRef<THREE.Group>(null);
+    const pistonRef = useRef<THREE.Mesh>(null);
     
-    useFrame((_, delta) => {
-        if (!stackRef.current) return;
-        const speed = 2 * delta;
-        
-        // Animation: Drop from sky
-        const tY = 0;
-        const pY = 5;
-        const targetY = isAssembled ? tY : pY;
-        
-        stackRef.current.position.y = THREE.MathUtils.lerp(stackRef.current.position.y, targetY, speed);
+    const extension = Math.sin(tilt) * 0.3; 
+    const baseLen = 0.6;
+    const currentLen = baseLen + extension;
+
+    useFrame(() => {
+        if (pistonRef.current) {
+             pistonRef.current.position.y = currentLen / 2;
+             pistonRef.current.scale.y = currentLen;
+        }
+        if (cylinderRef.current) {
+            // Angle the actuator to follow the connection point
+            cylinderRef.current.rotation.z = -tilt * 0.8; 
+            cylinderRef.current.position.y = -0.4 + (extension * 0.2); // slight movement
+        }
     });
 
     return (
-        <group ref={stackRef} position={[0, 0, 1.5]}>
-             {/* Base */}
-             <mesh position={[0, 0.05, 0]}>
-                 <boxGeometry args={[1, 0.1, 0.6]} />
-                 <meshStandardMaterial color="#111" />
-             </mesh>
-             
-             {/* Batteries */}
-             {Array.from({length: count}).map((_, i) => (
-                 <group key={i} position={[0, 0.15 + (i * 0.35) + 0.15, 0]}>
-                     <RoundedBox args={[0.9, 0.3, 0.55]} radius={0.02}>
-                         <meshStandardMaterial color="#222" roughness={0.4} />
-                     </RoundedBox>
-                     <mesh position={[0, 0, 0.28]}>
-                         <boxGeometry args={[0.8, 0.02, 0.01]} />
-                         <meshBasicMaterial color="#22c55e" />
-                     </mesh>
-                 </group>
-             ))}
-
-             {/* Smart Hub (Top) */}
-             <group position={[0, 0.1 + (count * 0.35) + 0.4, 0]}>
-                 <RoundedBox args={[0.7, 0.5, 0.3]} radius={0.05}>
-                     <meshStandardMaterial color="#e5e5e5" metalness={0.2} roughness={0.2} />
-                 </RoundedBox>
-                 {/* Interface Panel */}
-                 <mesh position={[0, 0, 0.16]}>
-                     <planeGeometry args={[0.5, 0.3]} />
-                     <meshStandardMaterial color="#000" />
-                 </mesh>
-                 {/* Status Light Ring */}
-                 <mesh position={[0, 0, 0.17]}>
-                     <ringGeometry args={[0.05, 0.06, 32]} />
-                     <meshBasicMaterial color={isAssembled ? "#3b82f6" : "#333"} />
-                 </mesh>
+        <group position={[0.4, 0, 0]}> {/* Offset to Right side */}
+             <group ref={cylinderRef}>
+                {/* Cylinder Body */}
+                <mesh position={[0, -0.2, 0]}>
+                    <cylinderGeometry args={[0.04, 0.04, 0.5]} />
+                    <meshStandardMaterial color="#444" />
+                </mesh>
+                {/* Piston Rod */}
+                <mesh ref={pistonRef} position={[0, 0.3, 0]}>
+                    <cylinderGeometry args={[0.02, 0.02, 1]} />
+                    <meshStandardMaterial color="#bbb" metalness={0.8} />
+                </mesh>
+                {/* Joint */}
+                <mesh position={[0, -0.45, 0]}>
+                   <sphereGeometry args={[0.05]} />
+                   <meshStandardMaterial color="#333" />
+                </mesh>
              </group>
         </group>
     )
 }
 
-// 5. Smart Cables (CatmullRom)
-const SmartCables = ({ isAssembled, config }: { isAssembled: boolean, config: SystemConfig }) => {
-    // We need rational paths.
-    // 1. Solar Group 1 -> Hub Input (Left side)
-    // 2. Solar Group 2 (if exists) -> Hub Input (Right side)
-    // 3. Hub Output -> Street Lamp (Right side)
+// 2. Solar Group with Fixed Stand & Static Panels (No tracking)
+const SolarGroup = ({ index, show, unfolded }: { index: number, show: boolean, unfolded: boolean }) => {
+  const containerRef = useRef<THREE.Group>(null);
+  const pivotRef = useRef<THREE.Group>(null);
+  const [tilt, setTilt] = useState(0);
+
+  useFrame((_, delta) => {
+    if (!containerRef.current || !pivotRef.current) return;
+    const speed = 0.5 * delta;
+
+    // 1. Positioning (Shortened Spacing)
+    const groupSpacing = 2.5; // Shortened distance
+    // Center point logic: 
+    // If 1 group: 0 - 1.25 = -1.25
+    // If 2 groups: i=0 -> -1.25, i=1 -> 1.25
+    const tX = (index * groupSpacing) - (groupSpacing * 0.5); 
+    const tZ = -4; 
+    const tY = 1.2; 
+
+    containerRef.current.position.x = THREE.MathUtils.lerp(containerRef.current.position.x, tX, speed);
+    containerRef.current.position.z = THREE.MathUtils.lerp(containerRef.current.position.z, tZ, speed);
+    containerRef.current.position.y = THREE.MathUtils.lerp(containerRef.current.position.y, tY, speed);
+
+    // 2. No Tracking Logic (Static)
+    // Removed sunPosition dependency and dynamic tilt
+    let targetTilt = 0;
     
-    // Hub Ports
-    const hubHeight = (config.batteries * 0.35) + 0.4; // Approximate
-    const hubPos = new THREE.Vector3(0, hubHeight, 1.5);
+    // Apply tilt to Z axis (Roll) - Keeping it at 0 (Flat) for static display
+    pivotRef.current.rotation.z = THREE.MathUtils.lerp(pivotRef.current.rotation.z, targetTilt, speed);
     
-    // Lamp Input
-    const lampBase = new THREE.Vector3(3.5, 0.2, 0);
+    const targetPitch = unfolded ? -Math.PI / 2 : -Math.PI / 2; // Always horizontal-ish base
+    pivotRef.current.rotation.x = THREE.MathUtils.lerp(pivotRef.current.rotation.x, targetPitch, speed);
+
+    setTilt(targetTilt);
+  });
+
+  return (
+    <group ref={containerRef}>
+        {/* Fixed Base on Ground */}
+        {show && <FixedStand />}
+
+        {/* The Pivot Group */}
+        <group ref={pivotRef}>
+           {/* Visual Frame Spine */}
+           {unfolded && (
+               <mesh position={[0, 0, -0.1]} rotation={[0,0,0]}>
+                   <boxGeometry args={[0.1, 3.8, 0.05]} />
+                   <meshStandardMaterial color="#333" />
+               </mesh>
+           )}
+           
+           <group>
+              {[0, 1, 2, 3].map(i => (
+                <SolarPanel key={i} idx={i} show={show} unfolded={unfolded} />
+              ))}
+           </group>
+           
+           {/* Telescopic Actuator attached to frame */}
+           {unfolded && <TelescopicActuator tilt={tilt} />}
+        </group>
+    </group>
+  );
+};
+
+// 3. Home Lamp
+const HomeLamp = ({ show, on }: { show: boolean, on: boolean }) => {
+    const groupRef = useRef<THREE.Group>(null);
+    const lightRef = useRef<THREE.PointLight>(null);
+
+    useFrame((_, delta) => {
+        if (!groupRef.current || !lightRef.current) return;
+        const speed = 1.0 * delta;
+        const targetScale = show ? 1 : 0;
+        groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), speed);
+        
+        const targetInt = on ? 4 : 0;
+        lightRef.current.intensity = THREE.MathUtils.lerp(lightRef.current.intensity, targetInt, speed * 2);
+    });
 
     return (
+        <group ref={groupRef} position={[3, 0, 2.5]}>
+            <mesh position={[0, 0.05, 0]}>
+                <cylinderGeometry args={[0.25, 0.3, 0.1, 32]} />
+                <meshStandardMaterial color="#222" metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0, 1.5, 0]}>
+                <cylinderGeometry args={[0.02, 0.02, 3, 16]} />
+                <meshStandardMaterial color="#111" />
+            </mesh>
+            <mesh position={[0, 2.8, 0]}>
+                <coneGeometry args={[0.4, 0.5, 32, 1, true]} />
+                <meshStandardMaterial color="#f5f5f5" side={THREE.DoubleSide} transparent opacity={0.9} />
+            </mesh>
+            <mesh position={[0, 2.7, 0]}>
+                <sphereGeometry args={[0.08]} />
+                <meshStandardMaterial color="#fff" emissive={on ? "#ffaa00" : "#000"} emissiveIntensity={on ? 2 : 0} />
+            </mesh>
+            <pointLight ref={lightRef} position={[0, 2.6, 0]} distance={8} color="#ffaa00" castShadow />
+        </group>
+    )
+}
+
+// 4. Power System
+const PowerSystem = ({ count, show, active }: { count: number, show: boolean, active: boolean }) => {
+    const batteryRef = useRef<THREE.Group>(null);
+    const hubRef = useRef<THREE.Group>(null);
+    
+    useFrame((_, delta) => {
+        if (!batteryRef.current || !hubRef.current) return;
+        const speed = 1.0 * delta;
+        const tY = show ? 0 : 5;
+        
+        batteryRef.current.position.y = THREE.MathUtils.lerp(batteryRef.current.position.y, tY, speed);
+        hubRef.current.position.y = THREE.MathUtils.lerp(hubRef.current.position.y, tY + 1.2, speed * 0.9); 
+    });
+
+    return (
+        <group position={[0, 0, 3]}>
+             {/* Battery Stack - Left */}
+             <group ref={batteryRef} position={[-1.2, 0, 0]}>
+                 <mesh position={[0, 0.05, 0]}>
+                     <boxGeometry args={[1, 0.1, 0.6]} />
+                     <meshStandardMaterial color="#111" />
+                 </mesh>
+                 {Array.from({length: count}).map((_, i) => (
+                     <group key={i} position={[0, 0.15 + (i * 0.35) + 0.15, 0]}>
+                         <RoundedBox args={[0.9, 0.3, 0.55]} radius={0.02}>
+                             <meshStandardMaterial color="#222" roughness={0.4} />
+                         </RoundedBox>
+                         <Text position={[-0.35, 0, 0.28]} fontSize={0.05} color="#666">AGP-LFP</Text>
+                         <mesh position={[0.35, 0, 0.28]}>
+                             <circleGeometry args={[0.02]} />
+                             <meshBasicMaterial color={active ? "#22c55e" : "#333"} />
+                         </mesh>
+                     </group>
+                 ))}
+             </group>
+
+             {/* Smart Hub - Right */}
+             <group ref={hubRef} position={[1.2, 1.2, 0]}> 
+                 <mesh position={[0, -0.6, 0]}>
+                     <cylinderGeometry args={[0.05, 0.05, 1.2]} />
+                     <meshStandardMaterial color="#333" />
+                 </mesh>
+                 <mesh position={[0, -1.2, 0]}>
+                     <cylinderGeometry args={[0.2, 0.2, 0.05]} />
+                     <meshStandardMaterial color="#333" />
+                 </mesh>
+
+                 <group position={[0, 0.2, 0]}>
+                     <RoundedBox args={[0.7, 0.5, 0.3]} radius={0.05}>
+                         <meshStandardMaterial color="#e5e5e5" metalness={0.2} roughness={0.2} />
+                     </RoundedBox>
+                     <group position={[0, 0.05, 0.16]}>
+                         <mesh>
+                            <planeGeometry args={[0.55, 0.3]} />
+                            <meshStandardMaterial color="#000" />
+                         </mesh>
+                         {active && (
+                             <group position={[0, 0, 0.01]}>
+                                 <Text position={[-0.15, 0.08, 0]} fontSize={0.04} color="#888">INPUT</Text>
+                                 <Text position={[-0.15, 0.02, 0]} fontSize={0.06} color="#fbbf24">2.4kW</Text>
+                                 <Text position={[0.15, 0.08, 0]} fontSize={0.04} color="#888">OUTPUT</Text>
+                                 <Text position={[0.15, 0.02, 0]} fontSize={0.06} color="#3b82f6">0.8kW</Text>
+                             </group>
+                         )}
+                     </group>
+                 </group>
+             </group>
+
+             {/* Connection: Battery to Hub */}
+             {show && (
+                 <RealisticCable 
+                    start={new THREE.Vector3(-1.2, (count * 0.35) + 0.2, 0)}
+                    end={new THREE.Vector3(1.2, 1.0, 0)}
+                    midPoint={new THREE.Vector3(0, 0.5, 0)}
+                    active={active}
+                    color="#22c55e"
+                    thick={true}
+                 />
+             )}
+        </group>
+    )
+}
+
+// 5. Smart Cables (Daisy Chain Logic)
+const SmartCables = ({ show, config, hubPos }: { show: boolean, config: SystemConfig, hubPos: THREE.Vector3 }) => {
+    
+    // Group positions are calculated based on groupSpacing = 2.5
+    // Width of panel group is ~2.1m.
+    // Center of Group 0: -1.25. Right Edge of G0: -1.25 + 1.05 = -0.2
+    // Center of Group 1: +1.25. Left Edge of G1: 1.25 - 1.05 = 0.2
+    // Gap is 0.4m.
+    
+    const zDepth = -4;
+    
+    return (
         <group>
-            {/* Cable 1: Solar 1 (Left) to Hub */}
-            <RealisticCable 
-                start={new THREE.Vector3(-1, 0.1, -1)} 
-                end={new THREE.Vector3(-0.3, hubHeight, 1.5)} 
-                midPoint={new THREE.Vector3(-0.8, 0.1, 1)}
-                active={isAssembled}
-                delay={0.5}
-            />
-            
-            {/* Cable 2: Solar 2 (Right - if exists) to Hub */}
+            {/* 1. Daisy Chain: Group 0 to Group 1 (if exists) */}
             {config.panelGroups > 1 && (
                  <RealisticCable 
-                    start={new THREE.Vector3(1, 0.1, -1)} 
-                    end={new THREE.Vector3(0.3, hubHeight, 1.5)} 
-                    midPoint={new THREE.Vector3(0.8, 0.1, 1)}
-                    active={isAssembled}
-                    delay={0.8}
+                    start={new THREE.Vector3(-0.2, 0.5, zDepth)} // G0 Right Edge (-1.25 + 1.05)
+                    end={new THREE.Vector3(0.2, 0.5, zDepth)}    // G1 Left Edge (1.25 - 1.05)
+                    midPoint={new THREE.Vector3(0, 0.1, zDepth)} // Hangs low
+                    active={show}
+                    color="#fbbf24"
                 />
             )}
 
-            {/* Cable 3: Hub to Lamp */}
+            {/* 2. Final Run: Last Group to Hub */}
             <RealisticCable 
-                start={new THREE.Vector3(0.35, hubHeight - 0.2, 1.5)} 
-                end={lampBase} 
-                midPoint={new THREE.Vector3(1.5, 0.1, 1.5)}
-                active={isAssembled}
+                start={
+                    config.panelGroups > 1 
+                    ? new THREE.Vector3(2.3, 0.5, zDepth)  // Group 1 Right Edge (1.25 + 1.05)
+                    : new THREE.Vector3(-0.2, 0.5, zDepth) // Group 0 Right Edge (-1.25 + 1.05)
+                }
+                end={hubPos} 
+                midPoint={new THREE.Vector3(1.0, 0.2, 0)}
+                active={show}
+                color="#fbbf24"
+            />
+
+            {/* 3. Hub to Lamp */}
+            <RealisticCable 
+                start={new THREE.Vector3(hubPos.x + 0.2, hubPos.y, hubPos.z)} 
+                end={new THREE.Vector3(3, 0.1, 2.5)} 
+                midPoint={new THREE.Vector3(2.5, 0.8, 2.5)}
+                active={show}
                 color="#ffffff"
-                delay={1.2} // Connect last
             />
         </group>
     )
 }
 
-const RealisticCable = ({ start, end, midPoint, active, color = "#ff9900", delay = 0 }: any) => {
+const RealisticCable = ({ start, end, midPoint, active, color = "#ff9900", thick=false }: any) => {
     const curve = useMemo(() => {
-        return new THREE.CatmullRomCurve3([
-            start,
-            midPoint,
-            end
-        ], false, 'catmullrom', 0.2);
+        return new THREE.CatmullRomCurve3([start, midPoint, end], false, 'catmullrom', 0.2);
     }, [start, end, midPoint]);
 
-    // Animate cable "growth" or appearance
     const [progress, setProgress] = useState(0);
 
     useFrame((_, delta) => {
-        const target = active ? 1 : 0;
-        // Simple delay logic simulation
-        if (active && delay > 0) {
-             // This is a hacky delay for visual effect
-             // Real implementation would use a timeline
-        }
-        
-        const speed = 1.0 * delta;
+        const speed = 0.5 * delta; 
         if (active) {
             setProgress(p => Math.min(p + speed, 1));
         } else {
@@ -440,15 +483,14 @@ const RealisticCable = ({ start, end, midPoint, active, color = "#ff9900", delay
         }
     });
 
-    if (progress < 0.1) return null;
+    if (progress < 0.05) return null;
 
     return (
         <group>
             <mesh>
-                 <tubeGeometry args={[curve, 32, 0.02, 8, false]} />
+                 <tubeGeometry args={[curve, 40, thick ? 0.03 : 0.015, 8, false]} />
                  <meshStandardMaterial color="#111" />
             </mesh>
-            {/* Flowing Electrons */}
             {active && progress > 0.9 && (
                  <ElectronFlow curve={curve} color={color} />
             )}
@@ -457,17 +499,15 @@ const RealisticCable = ({ start, end, midPoint, active, color = "#ff9900", delay
 }
 
 const ElectronFlow = ({ curve, color }: any) => {
-    const count = 5;
+    const count = 4;
     const refs = useRef<THREE.Mesh[]>([]);
     
     useFrame((_, delta) => {
         refs.current.forEach((mesh, i) => {
              if(!mesh) return;
-             const speed = 0.5;
-             // Store offset in userData
+             const speed = 0.4;
              mesh.userData.offset = (mesh.userData.offset || (i / count)) + (speed * delta);
              if (mesh.userData.offset > 1) mesh.userData.offset = 0;
-             
              const pt = curve.getPoint(mesh.userData.offset);
              mesh.position.copy(pt);
         });
@@ -477,76 +517,162 @@ const ElectronFlow = ({ curve, color }: any) => {
         <group>
             {Array.from({length: count}).map((_, i) => (
                 <mesh key={i} ref={el => refs.current[i] = el!} scale={0.8}>
-                    <sphereGeometry args={[0.03, 8, 8]} />
+                    <sphereGeometry args={[0.04]} />
                     <meshBasicMaterial color={color} toneMapped={false} />
-                    <pointLight distance={0.5} intensity={2} color={color} />
+                    <pointLight distance={0.4} intensity={2} color={color} />
                 </mesh>
             ))}
         </group>
     )
 }
 
+// 6. Static Sun
+const Sun = () => {
+    // Static Sun Position
+    const sunPos = new THREE.Vector3(5, 15, 5);
+
+    return (
+        <group>
+            <mesh position={sunPos}>
+                <sphereGeometry args={[1.5, 32, 32]} />
+                <meshBasicMaterial color="#fbbf24" toneMapped={false} />
+                <pointLight intensity={2} distance={100} color="#fbbf24" />
+            </mesh>
+            <directionalLight 
+                position={sunPos}
+                intensity={3} 
+                castShadow 
+                color="#fffbeb"
+                shadow-bias={-0.0001}
+            />
+        </group>
+    )
+}
+
 
 // --- Main Scene ---
-const Experience = ({ config, isAssembled }: { config: SystemConfig, isAssembled: boolean }) => {
+const Experience = ({ config, stage }: { config: SystemConfig, stage: number }) => {
+   const showPower = stage >= 1;
+   const showLamp = stage >= 2;
+   const showSolar = stage >= 3;
+   const unfoldSolar = stage >= 4;
+   const connectCables = stage >= 5;
+   const systemActive = stage >= 5;
+
    return (
       <>
-         <PerspectiveCamera makeDefault position={[6, 4, 8]} fov={35} />
+         <PerspectiveCamera makeDefault position={[0, 8, 14]} fov={35} />
          <OrbitControls 
             enablePan={true} 
             minPolarAngle={0} 
             maxPolarAngle={Math.PI / 2.1} 
-            autoRotate={isAssembled}
-            autoRotateSpeed={0.5}
-            target={[0, 1.5, 0]}
+            autoRotate={false}
+            target={[0, 2, 0]}
          />
          
-         {/* 1. BRIGHT LIGHTING SETUP */}
-         <Environment preset="city" environmentIntensity={1.5} />
-         <ambientLight intensity={2.5} color="#ffffff" />
-         <directionalLight 
-            position={[10, 20, 10]} 
-            intensity={4.0} 
-            castShadow 
-            shadow-bias={-0.0001}
-            color="#fffbeb"
-         />
-         <directionalLight position={[-10, 5, -10]} intensity={1} color="#bfdbfe" />
+         <Environment preset="city" environmentIntensity={0.8} />
+         <ambientLight intensity={0.5} />
+         
+         {/* Static Sun */}
+         {systemActive && <Sun />}
+         {!systemActive && <directionalLight position={[10, 10, 5]} intensity={2} />}
 
-         <group position={[0, -0.5, 0]}>
-            {/* Solar Arrays (2x2) */}
+         <group position={[0, -1, 0]}>
+            {/* Solar Arrays with Fixed Stand & Static Panels */}
             {Array.from({ length: config.panelGroups }).map((_, i) => (
-               <SolarGroup key={`sg-${i}`} index={i} isAssembled={isAssembled} />
+               <SolarGroup key={`sg-${i}`} index={i} show={showSolar} unfolded={unfoldSolar} />
             ))}
 
-            {/* Central Power Stack */}
-            <PowerStack count={config.batteries} isAssembled={isAssembled} />
+            {/* Separated Power System */}
+            <PowerSystem count={config.batteries} show={showPower} active={systemActive} />
             
-            {/* Load (Street Lamp) */}
-            <StreetLamp isAssembled={isAssembled} />
+            {/* Home Lamp */}
+            <HomeLamp show={showLamp} on={systemActive} />
             
-            {/* Cables */}
-            <SmartCables isAssembled={isAssembled} config={config} />
+            {/* Daisy Chain Cables */}
+            <SmartCables show={connectCables} config={config} hubPos={new THREE.Vector3(1.2, 1.4, 3)} />
             
             {/* Floor */}
             <ContactShadows resolution={1024} scale={50} blur={2} opacity={0.4} far={10} color="#000" />
-            <gridHelper args={[20, 20, 0x444444, 0x222222]} position={[0, 0.01, 0]} />
+            <gridHelper args={[40, 40, 0x333333, 0x111111]} position={[0, 0.01, 0]} />
          </group>
       </>
    );
 };
 
+// --- Mobile Fallback UI ---
+const MobileFallback = () => {
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-surface-900 to-black p-8 text-center border-t border-white/5 relative overflow-hidden">
+        {/* Abstract decoration */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-lumina-500/10 rounded-full blur-[80px]"></div>
+        
+        <div className="relative z-10 bg-surface-800/50 backdrop-blur-md p-8 rounded-3xl border border-white/10 shadow-2xl max-w-sm">
+            <div className="w-16 h-16 bg-surface-900 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-lg">
+                <MonitorSmartphone className="w-8 h-8 text-lumina-400" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-white mb-3">
+                3D 体验仅支持桌面端
+            </h3>
+            <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                为了提供最佳的交互性能与视觉效果，全系统自动装配演示功能已针对桌面大屏设备进行优化。
+            </p>
+            <p className="text-xs text-gray-500">
+                请切换至 PC 或 Mac 浏览器访问以获得完整体验。
+            </p>
+        </div>
+    </div>
+  );
+};
+
 // --- Main Component ---
 export const SystemAssembly: React.FC = () => {
   const [activeConfig, setActiveConfig] = useState<ConfigType>('chen-10');
-  const [isAssembled, setIsAssembled] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [stage, setStage] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Auto-assemble effect
+  // Mobile Detection
   useEffect(() => {
-     setIsAssembled(false);
-     const t = setTimeout(() => setIsAssembled(true), 500);
-     return () => clearTimeout(t);
-  }, [activeConfig]);
+    const checkMobile = () => {
+        setIsMobile(window.innerWidth < 1024); // Consider tablets as mobile for heavy 3D
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Sequenced Animation Logic
+  useEffect(() => {
+     if (!isPlaying || isMobile) {
+         setStage(0);
+         return;
+     }
+
+     let timers: NodeJS.Timeout[] = [];
+     
+     // Slower Sequence
+     setStage(1);
+     timers.push(setTimeout(() => setStage(2), 2000));
+     timers.push(setTimeout(() => setStage(3), 4000));
+     timers.push(setTimeout(() => setStage(4), 6000));
+     timers.push(setTimeout(() => setStage(5), 9000));
+
+     return () => timers.forEach(t => clearTimeout(t));
+  }, [isPlaying, activeConfig, isMobile]);
+
+  // Auto-play on load (only desktop)
+  useEffect(() => {
+      if (!isMobile) {
+        setIsPlaying(true);
+      }
+  }, [isMobile]);
+
+  const handleReset = () => {
+      setIsPlaying(false);
+      setTimeout(() => setIsPlaying(true), 500);
+  }
 
   return (
     <div className="bg-surface-900 py-24 border-t border-white/5 relative">
@@ -560,53 +686,69 @@ export const SystemAssembly: React.FC = () => {
               全系统自动装配演示
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-               见证光伏阵列展开、线束连接与负载供电的全过程。
+               包含分离式储能部署、可伸缩光伏支架展开及线缆连接演示。
             </p>
         </div>
 
         {/* 3D Canvas Container */}
         <div className="relative w-full h-[600px] bg-gradient-to-b from-gray-900 to-black rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl">
            
-           <Canvas shadows dpr={[1, 2]} gl={{ toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.3 }}>
-              <Experience config={CONFIGS[activeConfig]} isAssembled={isAssembled} />
-           </Canvas>
+           {isMobile ? (
+               <MobileFallback />
+           ) : (
+               <>
+                   <Canvas shadows dpr={[1, 2]} gl={{ toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}>
+                      <Experience config={CONFIGS[activeConfig]} stage={stage} />
+                   </Canvas>
 
-           {/* Controls */}
-           <div className="absolute top-8 left-8 z-10 flex flex-col gap-4 w-64">
-              <div className="bg-black/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-xl">
-                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center">
-                    <BoxIcon className="w-3 h-3 mr-2" />
-                    配置选择
-                 </h3>
-                 <div className="space-y-2">
-                     {(Object.keys(CONFIGS) as ConfigType[]).map((key) => (
-                        <button
-                          key={key}
-                          onClick={() => setActiveConfig(key)}
-                          className={`w-full text-left px-3 py-3 rounded-xl text-sm transition-all flex justify-between items-center border ${
-                             activeConfig === key 
-                             ? 'bg-lumina-900/50 border-lumina-500/50 text-white shadow-[0_0_15px_rgba(20,184,166,0.2)]' 
-                             : 'bg-transparent border-transparent text-gray-400 hover:bg-white/5 hover:text-white'
-                          }`}
-                        >
-                           <span className="font-medium">{CONFIGS[key].name}</span>
-                           {activeConfig === key && <CheckCircle2 className="w-4 h-4 text-lumina-400" />}
-                        </button>
-                     ))}
-                 </div>
-              </div>
+                   {/* Controls */}
+                   <div className="absolute top-8 left-8 z-10 flex flex-col gap-4 w-64">
+                      <div className="bg-black/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-xl">
+                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center">
+                            <BoxIcon className="w-3 h-3 mr-2" />
+                            配置选择
+                         </h3>
+                         <div className="space-y-2">
+                             {(Object.keys(CONFIGS) as ConfigType[]).map((key) => (
+                                <button
+                                  key={key}
+                                  onClick={() => {
+                                      setActiveConfig(key);
+                                      handleReset();
+                                  }}
+                                  className={`w-full text-left px-3 py-3 rounded-xl text-sm transition-all flex justify-between items-center border ${
+                                     activeConfig === key 
+                                     ? 'bg-lumina-900/50 border-lumina-500/50 text-white shadow-[0_0_15px_rgba(20,184,166,0.2)]' 
+                                     : 'bg-transparent border-transparent text-gray-400 hover:bg-white/5 hover:text-white'
+                                  }`}
+                                >
+                                   <span className="font-medium">{CONFIGS[key].name}</span>
+                                   {activeConfig === key && <CheckCircle2 className="w-4 h-4 text-lumina-400" />}
+                                </button>
+                             ))}
+                         </div>
+                      </div>
 
-              <div className="bg-black/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-xl">
-                 <Button 
-                    onClick={() => setIsAssembled(!isAssembled)} 
-                    size="sm" 
-                    className={`w-full transition-all duration-300 ${isAssembled ? 'bg-surface-800 border-white/20 hover:bg-surface-700' : 'bg-lumina-500 hover:bg-lumina-400 text-black'}`}
-                 >
-                    {isAssembled ? '折叠复位 (Reset)' : '展开演示 (Deploy)'}
-                 </Button>
-              </div>
-           </div>
-           
+                      <div className="bg-black/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 shadow-xl">
+                         <Button 
+                            onClick={handleReset} 
+                            size="sm" 
+                            className="w-full transition-all duration-300 bg-lumina-500 hover:bg-lumina-400 text-black"
+                         >
+                            重新演示 (Replay)
+                         </Button>
+                      </div>
+                   </div>
+                   
+                   {/* Progress Indicator */}
+                   <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+                       {[1,2,3,4,5].map(i => (
+                           <div key={i} className={`h-1 rounded-full transition-all duration-500 ${stage >= i ? 'w-8 bg-lumina-500' : 'w-2 bg-gray-700'}`}></div>
+                       ))}
+                   </div>
+               </>
+           )}
+
         </div>
       </div>
     </div>
