@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   Mountain, HardHat, ShieldCheck, Radio, 
   Palmtree, Fish, School, Lightbulb, 
-  ArrowUpRight, Users, Sprout, Anchor
+  ArrowUpRight, Sprout, 
+  Tent, Camera, Hotel, Signal, Droplets
 } from 'lucide-react';
 
 type ScenarioCategory = 'global' | 'sea';
@@ -60,6 +61,32 @@ export const ApplicationScenarios: React.FC = () => {
       color: 'from-red-600/40 to-rose-500/40',
       span: 'md:col-span-8'
     },
+    {
+      id: 'research_camp',
+      title: '科考营地 · 极限探索',
+      description: '为冰川科考、珠峰大本营提供精密仪器供电。零排放、零震动，最大程度保护脆弱的高原生态样本，支持科学探索。',
+      image: 'https://images.unsplash.com/photo-1517021897933-0e03195bb585?q=80&w=1000&auto=format&fit=crop',
+      stats: [
+        { label: '供电稳定', value: '99.9%' },
+        { label: '静音运行', value: '0dB' }
+      ],
+      icon: Tent,
+      color: 'from-indigo-600/40 to-purple-500/40',
+      span: 'md:col-span-6'
+    },
+    {
+      id: 'eco_monitor',
+      title: '生态监测 · 自然之眼',
+      description: '深入无人区，为红外相机与环境传感器提供永续能源。支持长达一年的无人值守运行，记录珍稀野生动物踪迹。',
+      image: 'https://images.unsplash.com/photo-1534234828563-0250914e672f?q=80&w=1000&auto=format&fit=crop',
+      stats: [
+        { label: '续航时间', value: '365天' },
+        { label: '维护周期', value: '1年' }
+      ],
+      icon: Camera,
+      color: 'from-green-600/40 to-teal-500/40',
+      span: 'md:col-span-6'
+    },
   ];
 
   const seaScenarios = [
@@ -74,33 +101,72 @@ export const ApplicationScenarios: React.FC = () => {
       ],
       icon: Lightbulb,
       color: 'from-orange-400/30 to-amber-500/30',
-      span: 'md:col-span-8' // Large card
+      span: 'md:col-span-8' 
     },
     {
       id: 'sea_production',
       title: '农渔生产 · 动力辅助',
       description: '为近海鱼排增氧机、热带水果冷藏库提供稳定动力。解决农业“靠天吃饭”难题，大幅降低生产用油成本，提升经济附加值。',
-      image: 'https://images.unsplash.com/photo-1533644267448-6d27878a123e?q=80&w=1000&auto=format&fit=crop', // Fishing boat/net
+      image: 'https://images.unsplash.com/photo-1533644267448-6d27878a123e?q=80&w=1000&auto=format&fit=crop',
       stats: [
         { label: '增收预期', value: '+40%' },
         { label: '回本周期', value: '<2年' }
       ],
       icon: Fish,
       color: 'from-cyan-500/30 to-blue-500/30',
-      span: 'md:col-span-4' // Small card
+      span: 'md:col-span-4' 
     },
     {
       id: 'sea_education',
       title: '公共服务 · 社区赋能',
       description: '点亮乡村学校的数字课堂，保障卫生所疫苗冰箱不间断运行。用清洁能源弥合数字鸿沟，守护社区健康。',
-      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1000&auto=format&fit=crop', // Classroom
+      image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=1000&auto=format&fit=crop',
       stats: [
         { label: '数字教育', value: '100%' },
         { label: '医疗保障', value: '稳定' }
       ],
       icon: School,
       color: 'from-emerald-500/30 to-teal-500/30',
-      span: 'md:col-span-12' // Full width
+      span: 'md:col-span-4' 
+    },
+    {
+      id: 'sea_tourism',
+      title: '海岛旅游 · 绿能度假',
+      description: '打造零碳排的高端生态度假村。替代柴油机，消除噪音与废气，还游客一片宁静海浪声，提升旅游体验。',
+      image: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1000&auto=format&fit=crop',
+      stats: [
+        { label: '游客满意', value: '+30%' },
+        { label: '运营成本', value: '-40%' }
+      ],
+      icon: Hotel,
+      color: 'from-rose-500/30 to-pink-500/30',
+      span: 'md:col-span-8'
+    },
+    {
+      id: 'sea_telecom',
+      title: '离岛通讯 · 信号覆盖',
+      description: '解决偏远岛礁基站供电难题。模块化快速部署，抗台风设计，保障关键时刻的通讯畅通，连接每一座孤岛。',
+      image: 'https://images.unsplash.com/photo-1522066890255-7da7577a79e6?q=80&w=1000&auto=format&fit=crop',
+      stats: [
+        { label: '在线率', value: '99.9%' },
+        { label: '抗风等级', value: '14级' }
+      ],
+      icon: Signal,
+      color: 'from-sky-500/30 to-indigo-500/30',
+      span: 'md:col-span-6'
+    },
+    {
+      id: 'sea_water',
+      title: '海水淡化 · 生命之源',
+      description: '光伏直驱海水淡化系统。解决孤岛缺水痛点，为居民和驻守人员提供符合 WHO 标准的饮用水，能源产水双独立。',
+      image: 'https://images.unsplash.com/photo-1562016600-ece13e8ba570?q=80&w=1000&auto=format&fit=crop',
+      stats: [
+        { label: '日产水量', value: '2-10T' },
+        { label: '水质标准', value: 'WHO' }
+      ],
+      icon: Droplets,
+      color: 'from-blue-400/30 to-cyan-300/30',
+      span: 'md:col-span-6'
     }
   ];
 
@@ -130,17 +196,17 @@ export const ApplicationScenarios: React.FC = () => {
           </div>
 
           {/* Tab Switcher */}
-          <div className="bg-surface-900 p-1.5 rounded-2xl border border-white/10 flex space-x-1">
+          <div className="bg-surface-900 p-1.5 rounded-2xl border border-white/10 flex space-x-1 shrink-0">
              <button 
                onClick={() => setActiveTab('global')}
-               className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center space-x-2 ${activeTab === 'global' ? 'bg-white text-black shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+               className={`px-4 sm:px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center space-x-2 ${activeTab === 'global' ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
              >
                <Mountain className="w-4 h-4" />
                <span>高原应用场景</span>
              </button>
              <button 
                onClick={() => setActiveTab('sea')}
-               className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center space-x-2 ${activeTab === 'sea' ? 'bg-lumina-500 text-black shadow-lg shadow-lumina-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+               className={`px-4 sm:px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center space-x-2 ${activeTab === 'sea' ? 'bg-lumina-500 text-black shadow-lg shadow-lumina-500/20 scale-105' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
              >
                <Palmtree className="w-4 h-4" />
                <span>东南亚应用场景</span>
@@ -148,12 +214,15 @@ export const ApplicationScenarios: React.FC = () => {
           </div>
         </div>
 
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[500px]">
+        {/* Bento Grid with Transition Effect */}
+        <div 
+          key={activeTab} 
+          className="grid grid-cols-1 md:grid-cols-12 gap-6 min-h-[600px] animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-forwards"
+        >
           {currentScenarios.map((item) => (
             <div 
               key={item.id} 
-              className={`${item.span} group relative rounded-[2.5rem] overflow-hidden border border-white/5 bg-surface-900 transition-all duration-500 hover:border-white/20 hover:shadow-2xl hover:-translate-y-1`}
+              className={`${item.span} group relative rounded-[2.5rem] overflow-hidden border border-white/5 bg-surface-900 transition-all duration-500 hover:border-white/20 hover:shadow-2xl hover:-translate-y-1 min-h-[400px] md:min-h-[360px]`}
             >
               {/* Background Image with Overlay */}
               <div className="absolute inset-0 z-0 h-full w-full">
@@ -177,12 +246,12 @@ export const ApplicationScenarios: React.FC = () => {
                     <ArrowUpRight className="w-6 h-6 text-white opacity-50" />
                 </div>
 
-                <div className="transform translate-y-0 group-hover:-translate-y-2 transition-transform duration-500">
+                <div className="transform translate-y-0 md:group-hover:-translate-y-2 transition-transform duration-500">
                     <h3 className="text-2xl font-bold text-white mb-3 flex items-center">
                         {item.title}
                     </h3>
                     
-                    <p className="text-gray-300 text-sm mb-6 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all">
+                    <p className="text-gray-300 text-sm mb-6 leading-relaxed line-clamp-3 md:line-clamp-2 md:group-hover:line-clamp-none transition-all">
                     {item.description}
                     </p>
 

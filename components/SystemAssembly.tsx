@@ -650,7 +650,7 @@ export const SystemAssembly: React.FC = () => {
          return;
      }
 
-     let timers: NodeJS.Timeout[] = [];
+     let timers: ReturnType<typeof setTimeout>[] = [];
      
      // Slower Sequence
      setStage(1);

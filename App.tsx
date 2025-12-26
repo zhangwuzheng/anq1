@@ -1,27 +1,25 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { Button } from './components/Button';
 import { Calculator } from './components/Calculator';
 import { DetailedSpecs } from './components/DetailedSpecs';
 import { FoldingStandSection } from './components/FoldingStandSection';
 import { SmartHubSection } from './components/SmartHubSection';
-// Remove direct import to save initial bundle size
-// import { SystemAssembly } from './components/SystemAssembly';
+import { CloudDataSection } from './components/CloudDataSection'; // Import Cloud Data Section
 import { ChartSection } from './components/ChartSection';
 import { ContactSection } from './components/ContactSection';
 import { SystemTopology } from './components/SystemTopology';
 import { AppDownload } from './components/AppDownload';
 import { ApplicationScenarios } from './components/ApplicationScenarios';
 import { PartnerMarquee } from './components/PartnerMarquee';
+import { ProductDetailPage } from './components/ProductDetailPage'; // Import the new page
 import { PRODUCTS, HERO_IMAGE } from './constants';
-import { ArrowRight, Home, Factory, Backpack, ChevronRight, Star, Timer, Box, Layers, MapPin, Mountain, Thermometer, Sun, Wind, CheckCircle, TrendingUp, DollarSign, Loader2 } from 'lucide-react';
+import { ArrowRight, Home, Factory, Backpack, ChevronRight, Star, Timer, Box, Layers, MapPin, Mountain, Thermometer, Sun, Wind, CheckCircle, TrendingUp, DollarSign } from 'lucide-react';
 import { Product } from './types';
-
-// Lazy load the heavy 3D component
-const SystemAssembly = lazy(() => import('./components/SystemAssembly').then(module => ({ default: module.SystemAssembly })));
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [currentView, setCurrentView] = useState<'home' | 'product-detail'>('home'); // Route state
 
   const scrollToContact = () => {
     document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
@@ -33,17 +31,22 @@ function App() {
   };
 
   const handleProductRecommendation = (productId: string) => {
+    // If we have a dedicated page for this, we could switch view. 
+    // For now, let's keep the calculator behavior but maybe highlight it leads to details
     setSelectedCategory('residential');
-    // Allow state to update and DOM to render
     setTimeout(() => {
       const element = document.getElementById(productId);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Visual cue
         element.classList.add('ring-4', 'ring-lumina-500');
         setTimeout(() => element.classList.remove('ring-4', 'ring-lumina-500'), 1500);
       }
     }, 100);
+  };
+
+  const navigateToProductDetail = () => {
+    window.scrollTo(0, 0);
+    setCurrentView('product-detail');
   };
 
   const renderProductCard = (product: Product) => {
@@ -57,7 +60,7 @@ function App() {
          )}
 
          {/* Image Section */}
-         <div className="relative h-48 w-full overflow-hidden">
+         <div className="relative h-48 w-full overflow-hidden cursor-pointer" onClick={!isComingSoon ? navigateToProductDetail : undefined}>
             <img src={product.image} alt={product.name} className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ${isComingSoon ? 'grayscale' : 'group-hover:scale-105'}`} />
             <div className="absolute inset-0 bg-gradient-to-t from-surface-900 via-transparent to-transparent opacity-80"></div>
          </div>
@@ -72,7 +75,12 @@ function App() {
                {isComingSoon && <span className="flex items-center text-[10px] text-gray-400"><Timer className="w-2.5 h-2.5 mr-1" /> 2026 Q4</span>}
             </div>
             
-            <h3 className={`text-xl font-bold mb-1 ${isComingSoon ? 'text-gray-400' : 'text-white'}`}>{product.name}</h3>
+            <h3 
+              className={`text-xl font-bold mb-1 cursor-pointer hover:text-lumina-400 transition-colors ${isComingSoon ? 'text-gray-400' : 'text-white'}`}
+              onClick={!isComingSoon ? navigateToProductDetail : undefined}
+            >
+              {product.name}
+            </h3>
             <p className="text-xs text-gray-400 font-medium mb-3">{product.tagline}</p>
             <p className="text-gray-300 text-xs leading-relaxed mb-4 flex-1 line-clamp-3">{product.description}</p>
 
@@ -104,20 +112,35 @@ function App() {
               </div>
             )}
 
-            <div className="mt-auto">
+            <div className="mt-auto flex gap-2">
                <Button 
                  size="sm" 
-                 onClick={scrollToContact} 
-                 className={`w-full text-xs py-2 h-9 ${isComingSoon ? 'opacity-50 cursor-not-allowed bg-surface-800 text-gray-500 hover:bg-surface-800 hover:text-gray-500 border border-white/5' : ''}`}
+                 onClick={isComingSoon ? undefined : navigateToProductDetail} 
+                 className={`flex-1 text-xs py-2 h-9 ${isComingSoon ? 'opacity-50 cursor-not-allowed bg-surface-800 text-gray-500 hover:bg-surface-800 hover:text-gray-500 border border-white/5' : ''}`}
                  disabled={isComingSoon}
                >
-                 {isComingSoon ? '敬请期待' : '立即咨询方案'}
+                 {isComingSoon ? '敬请期待' : '了解详情'}
                </Button>
+               {!isComingSoon && (
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={scrollToContact}
+                    className="px-3 h-9"
+                  >
+                    咨询
+                  </Button>
+               )}
             </div>
          </div>
       </div>
     );
   };
+
+  // --- Render Logic ---
+  if (currentView === 'product-detail') {
+    return <ProductDetailPage onBack={() => setCurrentView('home')} />;
+  }
 
   return (
     <div className="min-h-screen bg-black selection:bg-lumina-500 selection:text-white font-sans">
@@ -337,15 +360,7 @@ function App() {
       <section className="bg-black">
         <FoldingStandSection />
         <SmartHubSection />
-        {/* Suspense wrapper for lazy loading 3D component */}
-        <Suspense fallback={
-            <div className="w-full h-[600px] flex flex-col items-center justify-center bg-surface-900 border-t border-white/5">
-                <Loader2 className="w-10 h-10 text-lumina-500 animate-spin mb-4" />
-                <p className="text-gray-400">正在加载 3D 演示引擎...</p>
-            </div>
-        }>
-            <SystemAssembly />
-        </Suspense>
+        <CloudDataSection /> 
       </section>
 
       {/* Case Study Section (Visual Redesign) */}
