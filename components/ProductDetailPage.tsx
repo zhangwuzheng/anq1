@@ -10,19 +10,25 @@ export const ProductDetailPage: React.FC<ProductDetailProps> = ({ onBack }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
 
+  const navItems = [
+    { id: 'overview', label: '概览' },
+    { id: 'features', label: '特性' },
+    { id: 'specs', label: '规格参数' },
+    { id: 'box', label: '包装清单' },
+  ];
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setIsScrolled(scrollPosition > 100);
 
       // Simple spy logic
-      const sections = ['overview', 'features', 'specs', 'box'];
-      for (const section of sections) {
-        const element = document.getElementById(section);
+      for (const item of navItems) {
+        const element = document.getElementById(item.id);
         if (element) {
           const rect = element.getBoundingClientRect();
           if (rect.top >= 0 && rect.top < 300) {
-            setActiveSection(section);
+            setActiveSection(item.id);
           }
         }
       }
@@ -64,19 +70,19 @@ export const ProductDetailPage: React.FC<ProductDetailProps> = ({ onBack }) => {
             
             {/* Desktop Sub-Nav */}
             <div className="hidden md:flex space-x-8">
-               {['overview', 'features', 'specs', 'box'].map((item) => (
+               {navItems.map((item) => (
                  <button 
-                   key={item}
-                   onClick={() => scrollTo(item)}
-                   className={`text-sm font-medium capitalize transition-colors ${activeSection === item ? 'text-lumina-400' : 'text-gray-400 hover:text-white'}`}
+                   key={item.id}
+                   onClick={() => scrollTo(item.id)}
+                   className={`text-sm font-medium transition-colors ${activeSection === item.id ? 'text-lumina-400' : 'text-gray-400 hover:text-white'}`}
                  >
-                   {item === 'box' ? "In the Box" : item}
+                   {item.label}
                  </button>
                ))}
             </div>
 
             <div className="flex items-center space-x-4">
-               <span className="hidden md:block text-lg font-bold">¥ 4,999起</span>
+               <span className="hidden md:block text-lg font-bold">¥ 5,999起</span>
                <Button size="sm" className="rounded-full">立即购买</Button>
             </div>
           </div>
@@ -134,7 +140,7 @@ export const ProductDetailPage: React.FC<ProductDetailProps> = ({ onBack }) => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                     <div className="absolute bottom-8 left-8">
                        <div className="text-5xl font-bold text-lumina-400 mb-2">22.6%</div>
-                       <div className="text-sm text-gray-400 uppercase tracking-widest">Conversion Efficiency</div>
+                       <div className="text-sm text-gray-400 uppercase tracking-widest">光电转换效率</div>
                     </div>
                  </div>
               </div>
@@ -317,7 +323,7 @@ export const ProductDetailPage: React.FC<ProductDetailProps> = ({ onBack }) => {
                <p className="text-gray-400">立即购买，享受 3 年官方质保。</p>
             </div>
             <div className="flex space-x-4">
-               <Button size="lg" className="px-12 rounded-full">立即购买 ¥ 4,999起</Button>
+               <Button size="lg" className="px-12 rounded-full">立即购买 ¥ 5,999起</Button>
             </div>
          </div>
       </section>

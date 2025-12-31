@@ -12,61 +12,6 @@ import * as THREE from 'three';
 import { Button } from './Button';
 import { CheckCircle2, RotateCw, Box as BoxIcon, MonitorSmartphone } from 'lucide-react';
 
-// Augmented definition for React Three Fiber elements
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      meshPhysicalMaterial: any;
-      meshStandardMaterial: any;
-      meshBasicMaterial: any;
-      planeGeometry: any;
-      boxGeometry: any;
-      cylinderGeometry: any;
-      coneGeometry: any; 
-      sphereGeometry: any;
-      tubeGeometry: any;
-      torusGeometry: any;
-      ringGeometry: any;
-      circleGeometry: any;
-      ambientLight: any;
-      directionalLight: any;
-      spotLight: any;
-      pointLight: any;
-      gridHelper: any;
-      primitive: any;
-    }
-  }
-}
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      meshPhysicalMaterial: any;
-      meshStandardMaterial: any;
-      meshBasicMaterial: any;
-      planeGeometry: any;
-      boxGeometry: any;
-      cylinderGeometry: any;
-      coneGeometry: any; 
-      sphereGeometry: any;
-      tubeGeometry: any;
-      torusGeometry: any;
-      ringGeometry: any;
-      circleGeometry: any;
-      ambientLight: any;
-      directionalLight: any;
-      spotLight: any;
-      pointLight: any;
-      gridHelper: any;
-      primitive: any;
-    }
-  }
-}
-
 // --- Config ---
 type ConfigType = 'chen-5' | 'chen-10' | 'chen-15';
 
@@ -233,8 +178,14 @@ const TelescopicActuator = ({ tilt }: { tilt: number }) => {
     )
 }
 
+interface SolarGroupProps {
+  index: number;
+  show: boolean;
+  unfolded: boolean;
+}
+
 // 2. Solar Group with Fixed Stand & Static Panels (No tracking)
-const SolarGroup = ({ index, show, unfolded }: { index: number, show: boolean, unfolded: boolean }) => {
+const SolarGroup: React.FC<SolarGroupProps> = ({ index, show, unfolded }) => {
   const containerRef = useRef<THREE.Group>(null);
   const pivotRef = useRef<THREE.Group>(null);
   const [tilt, setTilt] = useState(0);
